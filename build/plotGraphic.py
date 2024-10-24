@@ -1,9 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-windowTitle = 'Plot Shoot Trajectory'
+windowTitle = 'Plot Projectile Trajectory'
 plotDesign = 'fivethirtyeight'
-plotTitle = 'Shoot graphic'
+plotTitle = 'Trajectory graphic'
 plotLineTitle = 'Projectile Course'
 plotXLabel = 'Distance (m)'
 plotYLabel = 'Height (m)'
@@ -12,10 +12,10 @@ plotColor = '#444444'
 alterPath = '../files/'
 
 def getCSVData():
-    return pd.read_csv(f'{alterPath}projectile.csv', index_col=0, delimiter=';')
+    return pd.read_csv(f'{alterPath}projectile.csv', delimiter=';')
 
 def plot(x, y):
-    plt.figure().canvas.set_window_title(windowTitle)
+    plt.figure().canvas.manager.set_window_title(windowTitle)
     plt.style.use(plotDesign)
     plt.plot(x, y, color=plotColor, linestyle='--', linewidth=2, label=plotLineTitle)
     plt.title(plotTitle)
@@ -28,4 +28,12 @@ def plot(x, y):
     plt.show()
 
 dataframe = getCSVData()
+
+max_height = dataframe['height'].max()
+max_height_time = dataframe['time'][dataframe['height'].idxmax()]
+max_distance = dataframe['distance'].max()
+max_distance_time = dataframe['time'][dataframe['distance'].idxmax()]
+
+print(f'Maximum height reached: {max_height}m at {max_height_time}s\nMaximum distance reached: {max_distance}m at {max_distance_time}s\n')
+
 plot(dataframe.distance, dataframe.height)
