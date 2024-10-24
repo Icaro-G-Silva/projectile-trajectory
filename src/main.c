@@ -1,12 +1,3 @@
-/*
-    Um projétil é atirado com uma velocidade inicial Vo(m/s) a um ângulo de inclinação θ(radianos)
-
-    Onde: 0<θ<90 e g=9.81ms²
-
-    Faça um programa que, dados os parâmetros θ e Vo, liste as coordenadas x e y no plano vertical em intervalos de 0.01 segundos para um tiro
-    em particular, terminando a listagem quando o projétil atingir o solo.
-*/
-
 #include "projectileCalc.c"
 #include "fileManager.c"
 
@@ -16,40 +7,76 @@
 
 void errorMessage(char message[], char title[]);
 void verifyAngleInput(float angle);
+void verifyNonNegativeInput(float value);
 void plotValues(Axis axis, float time);
 void plotGraphic();
 void printLine(int size);
 
 int main(int argc, char **argv) {
-    float angle, velocity; //User input
+    float angle, velocity, initialHeight, mass, dragCoefficient, crossSectionalArea; //User input
     float time = 0.0;
     Axis projectileAxis; //struct for the projectile axis
 
     if(argc > 1) {
-        if(argc == 3) {
+        if(argc == 7) {
             angle = atof(argv[1]);
             velocity = atof(argv[2]);
+            initialHeight = atof(argv[3]);
+            mass = atof(argv[4]);
+            dragCoefficient = atof(argv[5]);
+            crossSectionalArea = atof(argv[6]);
             verifyAngleInput(angle);
+            verifyNonNegativeInput(velocity);
+            verifyNonNegativeInput(initialHeight);
+            verifyNonNegativeInput(mass);
+            verifyNonNegativeInput(dragCoefficient);
+            verifyNonNegativeInput(crossSectionalArea);
         }
         else errorMessage("Check the minimum number of parameters for the program call", PARAM_ERROR);
     }
     else {
-        printf("Enter the shooting angle (in degrees): ");
+        printf("Enter the shooting angle (degrees): ");
         scanf("%f", &angle);
         verifyAngleInput(angle);
 
-        printf("Enter the initial shooting velocity (in m/s): ");
+        printf("Enter the initial shooting velocity (m/s): ");
         scanf("%f", &velocity);
+        verifyNonNegativeInput(velocity);
+
+        printf("Enter the initial height (m): ");
+        scanf("%f", &initialHeight);
+        verifyNonNegativeInput(initialHeight);
+
+        printf("Enter the mass (kg): ");
+        scanf("%f", &mass);
+        verifyNonNegativeInput(mass);
+
+        printf("Enter the drag coefficient: ");
+        scanf("%f", &dragCoefficient);
+        verifyNonNegativeInput(dragCoefficient);
+
+        printf("Enter the cross-sectional area (m^2): ");
+        scanf("%f", &crossSectionalArea);
+        verifyNonNegativeInput(crossSectionalArea);
     }
 
     angle *= (PI/180); //transforms degrees in radians
 
     if(!openFileStream()) errorMessage("Error opening file", FILE_ERROR);
     if(!writeHeader()) errorMessage("Error writing header", FILE_ERROR);
+    projectileAxis.y = initialHeight;
+    float xVelocity = getXaxisVelocity(velocity, angle);
+    float yVelocity = getYaxisVelocity(velocity, angle);
     do {
         updateTime(&time);
-        projectileAxis.x = getXaxis(getXaxisVelocity(velocity, angle), time);
-        projectileAxis.y = getYaxis(getYaxisVelocity(velocity, angle), time);
+        float combinedVelocity = getCombinedVelocity(xVelocity, yVelocity);
+        float dragForce = getDrag(combinedVelocity, dragCoefficient, crossSectionalArea);
+        float xAcceleration = getXAcceleration(dragForce, mass);
+        float yAcceleration = getYAcceleration(dragForce, mass);
+        xVelocity += xAcceleration * TIME_INCREMENT;
+        yVelocity += yAcceleration * TIME_INCREMENT;
+        projectileAxis.x += xVelocity * TIME_INCREMENT;
+        projectileAxis.y += yVelocity * TIME_INCREMENT;
         if(projectileAxis.y >= 0.0) {
             plotValues(projectileAxis, time);
             writeProjectileData(projectileAxis.x, projectileAxis.y, time);
@@ -86,5 +113,9 @@ void errorMessage(char message[], char title[]) {
 }
 
 void verifyAngleInput(float angle) {
-    if(angle < 0 || angle > MAX_ANGLE) errorMessage("Check the entry of the starting angle", VALUE_ERROR);
+    if(angle < 0 || angle > MAX_ANGLE) errorMessage("Check the entry of the starting angle (Need to be between 0 and 90)", VALUE_ERROR);
+}
+
+void verifyNonNegativeInput(float value) {
+    if(value < 0.0) errorMessage("Check the entry of the values. Ensure to not have any negative values", VALUE_ERROR);
 }

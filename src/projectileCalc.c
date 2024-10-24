@@ -14,6 +14,22 @@ float getYaxisVelocity(float velocity, float angle) {
     return (velocity * sinf(angle));
 }
 
+float getCombinedVelocity(float xAxisVelocity, float yAxisVelocity) {
+    return sqrt((xAxisVelocity * xAxisVelocity) + (yAxisVelocity * yAxisVelocity));
+}
+
+float getDrag(float combinedVelocity, float dragCoefficient, float crossSectionalArea) {
+    return 0.5 * dragCoefficient * AIR_DENSITY * crossSectionalArea * (combinedVelocity * combinedVelocity);
+}
+
+float getXAcceleration(float drag, float mass) {
+    return -drag / mass;
+}
+
+float getYAcceleration(float drag, float mass) {
+    return -GRAVITY - (drag / mass);
+}
+
 float getXaxis(float xAxisVelocity, float time) {
     return xAxisVelocity * time;
 }
